@@ -1,34 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
-#include <funcs.h>
+#include <shaders.h>
+#include <display.h>
 
-#define DISPLAY_WIDTH 1280
-#define DISPLAY_HEIGHT 720
+static float *vertices;
+static int vertices_count = 0;
 
-const char *vertex_shader = ("#version 410 core\n"
-                             "in vec3 vp;"
-                             "void main() {"
-                             "  gl_Position = vec4(vp, 1.0);"
-                             "}");
-
-const char *fragment_shader = ("#version 410 core\n"
-                               "out vec4 frag_colour;"
-                               "void main() {"
-                               "  frag_colour = vec4(0.5, 0.0, 0.5, 1.0);"
-                               "}");
-
-static const float vertices[] = {
-    0.0f,  0.5f,  0.0f, // XYZ of first point
-    0.5f,  -0.5f, 0.0f, // XYZ of second point
-    -0.5f, -0.5f, 0.0f, // XYZ of third point
-};
-
-static void key_callback_glfw(GLFWwindow *window, int key, int scancode,
-                              int action, int mods) {
+void key_callback_glfw(GLFWwindow *window, int key, int scancode, int action,
+                       int mods) {
   switch (key) {
   case GLFW_KEY_ESCAPE: {
     glfwSetWindowShouldClose(window, 1);
@@ -37,73 +21,58 @@ static void key_callback_glfw(GLFWwindow *window, int key, int scancode,
 }
 
 int main(int argc, char **argv) {
-  // Init GLFW
-  if (!glfwInit()) {
-    fprintf(stderr, "GLFW: Init failed\r\n");
-    return -1;
-  }
-  glfwSetErrorCallback(error_callback_glfw);
-
-  // Setup window
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-  // Create window
-  GLFWwindow *window =
-      glfwCreateWindow(DISPLAY_WIDTH, DISPLAY_HEIGHT, "Physics", NULL, NULL);
+  GLFWwindow *window = create_window();
   if (!window) {
-    fprintf(stderr, "GLFW: Window creating failed\r\n");
-    glfwTerminate();
     return -1;
   }
-  glfwSetKeyCallback(window, key_callback_glfw);
-  glfwMakeContextCurrent(window);
-  int ver = gladLoadGL(glfwGetProcAddress);
-  if (ver == 0) {
-    fprintf(stderr, "GLAD: Cannot load OpenGL\r\n");
-    glfwTerminate();
+
+  GLuint shader_program = link_shader_program();
+  if (!shader_program) {
     glfwDestroyWindow(window);
+    glfwTerminate();
     return -1;
   }
 
-  fprintf(stdout, "GLAD: OpenGL Version:  %d.%d\r\n", GLAD_VERSION_MAJOR(ver),
-          GLAD_VERSION_MINOR(ver));
-  fprintf(stdout, "GLAD: OpenGL Renderer: %s\r\n", glGetString(GL_RENDERER));
+  // Create vertices
+  vertices = malloc(sizeof(float) * 128);
+  if (vertices == NULL) {
+    glfwDestroyWindow(window);
+    glfwTerminate();
+    return -1;
+  }
+  memset(vertices, 0, 128 * sizeof(float));
+  int sz = 128;
 
-  char *title = malloc(128);
-  snprintf(title, 127, "Physics | Renderer %s", glGetString(GL_RENDERER));
-  glfwSetWindowTitle(window, title);
+  float a = 512.f;
+  for (int i = 0; i < a; i += 2) {
+    float x = (2.0f / a * (float)i) - 1.0f;
+
+    if (vertices_count * 2 * sizeof(float) >= sz) {
+      sz <<= 1;
+      vertices = reallocarray(vertices, vertices_count * 2, sz);
+    }
+
+    vertices[(i * 2) + 0] = x;
+    vertices[(i * 2) + 1] = -1.0f;
+
+    vertices[(i * 2) + 2] = x;
+    vertices[(i * 2) + 3] = 1.0f;
+    vertices_count += 2;
+  }
 
   // Init buffer
+  printf("OpenGL: Creating buffers and arrays\r\n");
   GLuint vbo = 0;
-  glGenBuffers(1, &vbo);
-  glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-  // Init array
   GLuint vao = 0;
+
   glGenVertexArrays(1, &vao);
+  glGenBuffers(1, &vbo);
   glBindVertexArray(vao);
-  glEnableVertexAttribArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-  // Create shaders
-  printf("OpenGL: Compiling shaders\r\n");
-  GLuint vs = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(vs, 1, &vertex_shader, NULL);
-  glCompileShader(vs);
-
-  GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fs, 1, &fragment_shader, NULL);
-  glCompileShader(fs);
-
-  printf("OpenGL: Linking shader program\r\n");
-  GLuint shader_program = glCreateProgram();
-  glAttachShader(shader_program, vs);
-  glAttachShader(shader_program, fs);
-  glLinkProgram(shader_program);
+  glBufferData(GL_ARRAY_BUFFER, vertices_count * 2 * sizeof(float), vertices,
+               GL_STATIC_DRAW);
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), NULL);
+  glEnableVertexAttribArray(0);
 
   // Mainloop
   int width, height;
@@ -113,12 +82,11 @@ int main(int argc, char **argv) {
 
     /* Draw */
     glClearColor(0, 0, 0, 1);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT);
 
     glUseProgram(shader_program);
     glBindVertexArray(vao);
-
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glDrawArrays(GL_LINES, 0, vertices_count << 1);
 
     glfwSwapBuffers(window);
     glfwPollEvents();

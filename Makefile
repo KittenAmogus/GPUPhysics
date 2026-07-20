@@ -1,6 +1,6 @@
 CC = gcc
 
-CFLAGS = -march=native -O2 \
+CFLAGS = -march=native -O2 -Wall -Wextra \
 				 -isystem include
 LDFLAGS = -lglfw \
 					-lGL \
