@@ -1,0 +1,10 @@
+.clang-*
+build
+.cache
+compile_commands.json
+Simulator
+
+src/glad
+include/glad
+include/KHR
+
