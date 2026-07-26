@@ -4,8 +4,8 @@
 
 #include <glad/gl.h>
 
-const char *vertex_shader = "./vertex.vert";
-const char *fragment_shader = "./fragment.frag";
+const char *vertex_shader = "./shaders/vertex.vert";
+const char *fragment_shader = "./shaders/fragment.frag";
 
 const char *shader_read_src(const char *path) {
   // Open shader file
@@ -38,6 +38,11 @@ const char *shader_read_src(const char *path) {
 }
 
 GLuint shader_compile(const char *path, GLenum type) {
+  if (path == NULL) {
+    return SHADER_INVALID;
+  }
+  printf("SHADER: Compiling shader %s\r\n", path);
+
   GLuint shader = glCreateShader(type);
 
   const char *src = shader_read_src(path);

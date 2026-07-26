@@ -11,9 +11,10 @@ void vao_bind(GLuint id) { glBindVertexArray(id); }
 
 void vao_unbind(void) { vao_bind(0); }
 
-void vao_link(GLuint id, GLuint vbo, GLuint layout) {
+void vao_link(GLuint id, GLuint vbo, GLuint layout, GLuint comp_num,
+              GLenum type, GLsizeiptr stride, void *offset) {
   vao_bind(id);
-  glVertexAttribPointer(layout, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
+  glVertexAttribPointer(layout, comp_num, type, GL_FALSE, stride, offset);
   glEnableVertexAttribArray(layout);
   vao_unbind();
 }

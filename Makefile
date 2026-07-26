@@ -4,7 +4,8 @@ CFLAGS = -march=native -O2 -Wall -Wextra -Wno-unused-parameter \
 				 -isystem include -g3
 LDFLAGS = -lglfw \
 					-lGL \
-					-ldl
+					-ldl \
+					-lm
 
 TARGET = Simulator
 GLAD_FILES = src/glad/gl.c
