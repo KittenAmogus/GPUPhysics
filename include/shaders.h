@@ -1,9 +1,8 @@
 #ifndef _SHADERS_H
 #define _SHADERS_H
 
-#include <glad/gl.h>
-#include <GLFW/glfw3.h>
-
-GLuint link_shader_program(void);
+extern const char *vertex_shader;
+extern const char *fragment_shader;
+const char *read_shader(const char *path);
 
 #endif // _SHADERS_H

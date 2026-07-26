@@ -1,7 +1,7 @@
 CC = gcc
 
-CFLAGS = -march=native -O2 -Wall -Wextra \
-				 -isystem include
+CFLAGS = -march=native -O2 -Wall -Wextra -Wno-unused-parameter \
+				 -isystem include -g3
 LDFLAGS = -lglfw \
 					-lGL \
 					-ldl
