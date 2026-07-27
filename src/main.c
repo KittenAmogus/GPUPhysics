@@ -1,9 +1,9 @@
-#include <SDL2/SDL_events.h>
-#include <SDL2/SDL_render.h>
-#include <SDL2/SDL_video.h>
 #include <stdio.h>
 
 #include <SDL2/SDL.h>
+
+#define WIDTH 1280
+#define HEIGHT 720
 
 int main(void) {
   if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -13,7 +13,7 @@ int main(void) {
 
   SDL_Window *window =
       SDL_CreateWindow("SDL Window", SDL_WINDOWPOS_CENTERED,
-                       SDL_WINDOWPOS_CENTERED, 1280, 720, SDL_WINDOW_SHOWN);
+                       SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, SDL_WINDOW_SHOWN);
   if (window == NULL) {
     fprintf(stderr, "SDL: Window creating failed: %s\r\n", SDL_GetError());
     SDL_Quit();
@@ -36,6 +36,15 @@ int main(void) {
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
+
+    /* Draw */
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_RenderDrawLine(renderer, WIDTH / 4, HEIGHT / 4 * 3, WIDTH / 4 * 2,
+                       HEIGHT / 4);
+    SDL_RenderDrawLine(renderer, WIDTH / 4 * 2, HEIGHT / 4, WIDTH / 4 * 3,
+                       HEIGHT / 4 * 3);
+    SDL_RenderDrawLine(renderer, WIDTH / 4, HEIGHT / 4 * 3, WIDTH / 4 * 3,
+                       HEIGHT / 4 * 3);
 
     SDL_RenderPresent(renderer);
   }
